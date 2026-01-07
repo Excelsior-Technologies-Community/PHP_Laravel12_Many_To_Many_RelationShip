@@ -1,4 +1,4 @@
-# Laravel 12 Many-to-Many Relationship – Students & Courses
+# PHP_Laravel12_Many_To_Many_RelationShip
 
 ## Project Overview
 
