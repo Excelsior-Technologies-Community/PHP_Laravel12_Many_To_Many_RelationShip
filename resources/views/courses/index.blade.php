@@ -3,6 +3,78 @@
 @section('title', 'Courses & Students')
 
 @section('content')
+
+<!-- Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+    <div class="glass-card rounded-2xl p-6 text-center">
+        <div class="text-4xl text-white mb-2">
+            <i class="fas fa-book"></i>
+        </div>
+        <div class="text-4xl font-bold text-white">
+            {{ $totalCourses }}
+        </div>
+        <div class="text-white mt-2">
+            Total Courses
+        </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 text-center">
+        <div class="text-4xl text-white mb-2">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="text-4xl font-bold text-white">
+            {{ $totalStudents }}
+        </div>
+        <div class="text-white mt-2">
+            Total Students
+        </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 text-center">
+        <div class="text-4xl text-white mb-2">
+            <i class="fas fa-link"></i>
+        </div>
+        <div class="text-4xl font-bold text-white">
+            {{ $totalEnrollments }}
+        </div>
+        <div class="text-white mt-2">
+            Total Enrollments
+        </div>
+    </div>
+
+</div>
+
+<!-- Search -->
+<div class="glass-card rounded-2xl p-6 mb-8">
+
+    <form method="GET" action="{{ route('courses.index') }}">
+
+        <div class="flex gap-4">
+
+            <input
+                type="text"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Search course title or description..."
+                class="flex-1 rounded-lg border px-4 py-3">
+
+            <button class="bg-blue-600 text-white px-6 rounded-lg">
+                <i class="fas fa-search mr-2"></i>
+                Search
+            </button>
+
+            <a href="{{ route('courses.index') }}"
+                class="bg-gray-600 text-white px-6 rounded-lg flex items-center">
+                Reset
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
 <div class="glass-card rounded-2xl p-6">
     <div class="flex justify-between items-center mb-8">
         <h2 class="text-3xl font-bold text-white">
@@ -15,54 +87,179 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($courses as $course)
-        <div class="bg-white rounded-xl p-5 shadow-lg hover-glow">
-            <div class="mb-4">
-                <h3 class="text-xl font-bold text-gray-800">{{ $course->title }}</h3>
-                <p class="text-gray-600 mt-2 text-sm">{{ $course->description }}</p>
-                
-                <div class="flex items-center justify-between mt-4">
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                        <i class="fas fa-users mr-1"></i> {{ $course->students->count() }} Students
+
+        <div class="bg-white rounded-xl shadow-lg hover-glow overflow-hidden">
+
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-5">
+
+                <div class="flex justify-between items-center">
+
+                    <h3 class="text-xl font-bold text-white">
+
+                        <i class="fas fa-book-open mr-2"></i>
+
+                        {{ $course->title }}
+
+                    </h3>
+
+                    <span class="bg-white text-blue-600 px-3 py-1 rounded-full text-xs font-bold">
+
+                        ID : {{ $course->id }}
+
                     </span>
-                    <span class="text-gray-500 text-sm">
-                        ID: {{ $course->id }}
-                    </span>
+
                 </div>
+
             </div>
 
-            <div class="border-t pt-4">
-                <h4 class="font-medium text-gray-700 mb-3 flex items-center">
-                    <i class="fas fa-user-graduate text-green-500 mr-2"></i> Enrolled Students:
-                </h4>
-                
-                <div class="space-y-2 max-h-40 overflow-y-auto pr-2">
-                    @forelse($course->students as $student)
-                    <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                        <div class="flex items-center">
-                            <i class="fas fa-user-circle text-gray-400 mr-2"></i>
-                            <span class="text-gray-800">{{ $student->name }}</span>
+            <div class="p-5">
+
+                <p class="text-gray-600 mb-5">
+
+                    {{ $course->description }}
+
+                </p>
+
+                <div class="grid grid-cols-2 gap-4 mb-5">
+
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+
+                        <div class="text-2xl font-bold text-blue-700">
+
+                            {{ $course->students->count() }}
+
                         </div>
-                        <span class="text-xs text-gray-500">
-                            {{ $student->email }}
-                        </span>
+
+                        <div class="text-gray-600 text-sm">
+
+                            Students
+
+                        </div>
+
                     </div>
-                    @empty
-                    <p class="text-gray-500 text-sm text-center py-2">No students enrolled yet</p>
-                    @endforelse
+
+                    <div class="bg-green-50 rounded-lg p-4 text-center">
+
+                        <div class="text-2xl font-bold text-green-700">
+
+                            {{ $course->id }}
+
+                        </div>
+
+                        <div class="text-gray-600 text-sm">
+
+                            Course ID
+
+                        </div>
+
+                    </div>
+
                 </div>
+
+                <h4 class="font-semibold text-gray-700 mb-3">
+
+                    <i class="fas fa-users text-green-500 mr-2"></i>
+
+                    Enrolled Students
+
+                </h4>
+
+                @if($course->students->count())
+
+                <div class="space-y-2 max-h-48 overflow-y-auto">
+
+                    @foreach($course->students as $student)
+
+                    <div class="flex justify-between items-center bg-gray-100 rounded-lg px-3 py-2">
+
+                        <div>
+
+                            <div class="font-semibold text-gray-700">
+
+                                {{ $student->name }}
+
+                            </div>
+
+                            <div class="text-xs text-gray-500">
+
+                                {{ $student->email }}
+
+                            </div>
+
+                        </div>
+
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+
+                            Student
+
+                        </span>
+
+                    </div>
+
+                    @endforeach
+
+                </div>
+
+                @else
+
+                <div class="bg-yellow-100 text-yellow-700 rounded-lg p-3 text-center">
+
+                    No students enrolled yet.
+
+                </div>
+
+                @endif
+
             </div>
+
         </div>
         @empty
-        <div class="md:col-span-3 text-center py-12">
-            <i class="fas fa-book-open text-5xl text-gray-400 mb-4"></i>
-            <h3 class="text-xl text-gray-600 mb-2">No Courses Available</h3>
-            <p class="text-gray-500">Generate sample data to get started!</p>
-            <a href="{{ route('create.sample') }}" 
-               class="inline-block mt-4 px-6 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg font-semibold hover:opacity-90 transition">
-                <i class="fas fa-magic mr-2"></i> Generate Sample Data
-            </a>
+
+        <div class="col-span-3">
+
+            <div class="bg-white rounded-xl shadow-lg p-10 text-center">
+
+                <i class="fas fa-book-open text-6xl text-gray-400 mb-4"></i>
+
+                <h2 class="text-2xl font-bold text-gray-700 mb-2">
+
+                    No Courses Found
+
+                </h2>
+
+                <p class="text-gray-500">
+
+                    No course matches your search.
+
+                </p>
+
+                <a href="{{ route('courses.index') }}"
+                    class="inline-block mt-5 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+
+                    <i class="fas fa-sync-alt mr-2"></i>
+
+                    Reset Search
+
+                </a>
+
+            </div>
+
         </div>
+
         @endforelse
+
     </div>
+
+    @if($courses->hasPages())
+
+    <div class="mt-10 flex justify-center">
+
+        {{ $courses->links() }}
+
+    </div>
+
+    @endif
+
 </div>
+
 @endsection
