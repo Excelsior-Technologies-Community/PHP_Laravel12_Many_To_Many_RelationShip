@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use App\Models\Course;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller
 {
@@ -83,13 +85,26 @@ class StudentController extends Controller
 
         $studentsWithoutCourse = Student::doesntHave('courses')->count();
 
+        /*
+    |--------------------------------------------------------------------------
+    | Full Courses
+    |--------------------------------------------------------------------------
+    */
+        $fullCourses = Course::get()
+            ->filter(function ($course) {
+
+                return $course->isFull();
+            })
+            ->count();
+
         return view('students.index', compact(
             'students',
             'courses',
             'totalStudents',
             'totalCourses',
             'totalEnrollments',
-            'studentsWithoutCourse'
+            'studentsWithoutCourse',
+            'fullCourses'
         ));
     }
 
@@ -174,43 +189,33 @@ class StudentController extends Controller
         $courses = [
 
             [
-
                 'title' => 'Laravel Advanced',
-
-                'description' => 'Master Laravel with advanced techniques'
-
+                'description' => 'Master Laravel with advanced techniques',
+                'capacity' => 20,
             ],
 
             [
-
                 'title' => 'PHP Fundamentals',
-
-                'description' => 'Learn PHP from scratch'
-
+                'description' => 'Learn PHP from scratch',
+                'capacity' => 35,
             ],
 
             [
-
                 'title' => 'Vue.js with Laravel',
-
-                'description' => 'Build modern SPA Applications'
-
+                'description' => 'Build modern SPA Applications',
+                'capacity' => 25,
             ],
 
             [
-
                 'title' => 'Database Design',
-
-                'description' => 'Relational Database Design'
-
+                'description' => 'Relational Database Design',
+                'capacity' => 15,
             ],
 
             [
-
                 'title' => 'API Development',
-
-                'description' => 'REST API using Laravel'
-
+                'description' => 'REST API using Laravel',
+                'capacity' => 30,
             ],
 
         ];
@@ -269,6 +274,11 @@ class StudentController extends Controller
             return back()->with('error', 'Student already enrolled.');
         }
 
+        if ($course->isFull()) {
+            return back()->with('error', 'This course has reached its maximum capacity.');
+        }
+
+
         $student->enroll($course);
 
         return back()->with('success', 'Student enrolled successfully.');
@@ -286,5 +296,226 @@ class StudentController extends Controller
         $student->drop($course);
 
         return back()->with('success', 'Student dropped successfully.');
+    }
+
+    /**
+     * Enrollment History
+     *
+     * Shows all student-course enrollments
+     * with search, date filter and pagination
+     */
+    public function history(Request $request)
+    {
+
+        $query = DB::table('course_student')
+            ->join(
+                'students',
+                'course_student.student_id',
+                '=',
+                'students.id'
+            )
+            ->join(
+                'courses',
+                'course_student.course_id',
+                '=',
+                'courses.id'
+            )
+            ->select(
+                'students.name as student_name',
+                'students.email',
+                'courses.title as course_title',
+                'courses.description',
+                'course_student.enrolled_at'
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | Search
+    |--------------------------------------------------------------------------
+    */
+
+        if ($request->filled('search')) {
+
+            $search = $request->search;
+
+
+            $query->where(function ($q) use ($search) {
+
+                $q->where(
+                    'students.name',
+                    'like',
+                    "%{$search}%"
+                )
+                    ->orWhere(
+                        'students.email',
+                        'like',
+                        "%{$search}%"
+                    )
+                    ->orWhere(
+                        'courses.title',
+                        'like',
+                        "%{$search}%"
+                    );
+            });
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | Date Filter
+    |--------------------------------------------------------------------------
+    */
+
+        if ($request->filled('date')) {
+
+            $query->whereDate(
+                'course_student.enrolled_at',
+                $request->date
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    */
+
+        $enrollments = $query
+            ->orderBy(
+                'course_student.enrolled_at',
+                'desc'
+            )
+            ->paginate(10)
+            ->withQueryString();
+
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | Statistics
+    |--------------------------------------------------------------------------
+    */
+
+        $totalEnrollments = DB::table('course_student')
+            ->count();
+
+
+        $todayEnrollments = DB::table('course_student')
+            ->whereDate(
+                'enrolled_at',
+                now()->toDateString()
+            )
+            ->count();
+
+
+        $uniqueStudents = DB::table('course_student')
+            ->distinct('student_id')
+            ->count('student_id');
+
+
+        $uniqueCourses = DB::table('course_student')
+            ->distinct('course_id')
+            ->count('course_id');
+
+
+
+        return view(
+            'history.index',
+            compact(
+                'enrollments',
+                'totalEnrollments',
+                'todayEnrollments',
+                'uniqueStudents',
+                'uniqueCourses'
+            )
+        );
+    }
+
+    /**
+     * Export Enrollment History CSV
+     */
+    public function exportHistory()
+    {
+
+        $enrollments = DB::table('course_student')
+
+            ->join(
+                'students',
+                'course_student.student_id',
+                '=',
+                'students.id'
+            )
+
+            ->join(
+                'courses',
+                'course_student.course_id',
+                '=',
+                'courses.id'
+            )
+
+            ->select(
+                'students.name as student_name',
+                'students.email',
+                'courses.title as course_title',
+                'course_student.enrolled_at'
+            )
+
+            ->orderBy(
+                'course_student.enrolled_at',
+                'desc'
+            )
+
+            ->get();
+
+
+        $response = new StreamedResponse(function () use ($enrollments) {
+
+            $handle = fopen('php://output', 'w');
+
+            // CSV Header
+
+            fputcsv($handle, [
+
+                'Student Name',
+                'Email',
+                'Course',
+                'Enrollment Date'
+
+            ]);
+
+
+            foreach ($enrollments as $item) {
+
+
+                fputcsv($handle, [
+
+                    $item->student_name,
+
+                    $item->email,
+
+                    $item->course_title,
+
+                    $item->enrolled_at
+
+                ]);
+            }
+
+            fclose($handle);
+        });
+
+        $response->headers->set(
+            'Content-Type',
+            'text/csv'
+        );
+
+        $response->headers->set(
+            'Content-Disposition',
+            'attachment; filename=enrollment-history.csv'
+        );
+
+
+        return $response;
     }
 }

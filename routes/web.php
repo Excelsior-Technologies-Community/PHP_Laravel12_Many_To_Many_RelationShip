@@ -10,3 +10,7 @@ Route::get('/create-sample-data', [StudentController::class, 'createSampleData']
 // Enrollment routes
 Route::post('/enroll', [StudentController::class, 'enroll'])->name('student.enroll');
 Route::delete('/drop/{student}/{course}', [StudentController::class, 'drop'])->name('student.drop');
+
+Route::get('/enrollment-history', [StudentController::class, 'history'])->name('enrollment.history');
+
+Route::get('/enrollment-history/export', [StudentController::class, 'exportHistory'])->name('enrollment.export');
