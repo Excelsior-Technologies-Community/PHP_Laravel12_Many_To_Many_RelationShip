@@ -8,7 +8,7 @@
     Dashboard Statistics
 ========================== -->
 
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
 
     <div class="glass-card rounded-2xl p-6 text-center">
 
@@ -70,6 +70,30 @@
 
         <p class="text-white mt-2">
             Students Without Course
+        </p>
+
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 text-center">
+
+        <div class="text-4xl text-white mb-3">
+
+            <i class="fas fa-lock"></i>
+
+        </div>
+
+
+        <h2 class="text-4xl font-bold text-white">
+
+            {{ $fullCourses }}
+
+        </h2>
+
+
+        <p class="text-white mt-2">
+
+            Full Courses
+
         </p>
 
     </div>
@@ -322,7 +346,8 @@
 
                 @foreach($courses as $course)
 
-                <div class="bg-white rounded-lg p-4">
+                <div class="bg-white rounded-lg p-4 shadow hover:shadow-lg transition">
+
 
                     <h4 class="font-bold text-gray-800">
 
@@ -330,29 +355,118 @@
 
                     </h4>
 
-                    <p class="text-gray-600 text-sm mt-1">
+
+                    <p class="text-gray-600 text-sm mt-2">
 
                         {{ $course->description }}
 
                     </p>
 
-                    <div class="flex justify-between items-center mt-3">
 
-                        <span class="text-sm text-gray-500">
 
-                            <i class="fas fa-users mr-1"></i>
+                    <div class="mt-4 space-y-3">
 
-                            {{ $course->students_count }} Students
 
-                        </span>
+                        <div class="flex justify-between">
 
-                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                            <span class="text-gray-600">
 
-                            ID : {{ $course->id }}
+                                <i class="fas fa-chair mr-1 text-blue-500"></i>
+
+                                Capacity
+
+                            </span>
+
+
+                            <span class="font-semibold">
+
+                                {{ $course->capacity }}
+
+                            </span>
+
+                        </div>
+
+
+                        
+                        <div class="flex justify-between">
+
+                            <span class="text-gray-600">
+
+                                <i class="fas fa-users mr-1 text-green-500"></i>
+
+                                Enrolled
+
+                            </span>
+
+
+                            <span class="font-semibold">
+
+                                {{ $course->students_count }}
+
+                            </span>
+
+                        </div>
+
+
+
+                        <div class="flex justify-between">
+
+                            <span class="text-gray-600">
+
+                                <i class="fas fa-user-plus mr-1 text-purple-500"></i>
+
+                                Remaining
+
+                            </span>
+
+
+                            <span class="font-semibold">
+
+                                {{ $course->remainingSeats() }}
+
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+
+                    @if($course->isFull())
+
+
+                    <div class="mt-4">
+
+                        <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs">
+
+                            <i class="fas fa-lock mr-1"></i>
+
+                            Course Full
 
                         </span>
 
                     </div>
+
+
+                    @else
+
+
+                    <div class="mt-4">
+
+                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">
+
+                            <i class="fas fa-check-circle mr-1"></i>
+
+                            Seats Available
+
+                        </span>
+
+                    </div>
+
+
+                    @endif
+
+
 
                 </div>
 
@@ -426,9 +540,13 @@
 
                             @foreach($courses as $course)
 
-                            <option value="{{ $course->id }}">
+                            <option
+                                value="{{ $course->id }}"
+                                {{ $course->isFull() ? 'disabled' : '' }}>
 
                                 {{ $course->title }}
+
+                                {{ $course->isFull() ? '(Course Full)' : '' }}
 
                             </option>
 
@@ -438,15 +556,28 @@
 
                     </div>
 
-                    <button
-                        type="submit"
-                        class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg">
+                    <div class="space-y-3">
 
-                        <i class="fas fa-user-graduate mr-2"></i>
+                        <button
+                            type="submit"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg">
 
-                        Enroll Student
+                            <i class="fas fa-user-graduate mr-2"></i>
 
-                    </button>
+                            Enroll Student
+
+                        </button>
+
+                        <a href="{{ route('enrollment.history') }}"
+                            class="block w-full text-center bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg">
+
+                            <i class="fas fa-history mr-2"></i>
+
+                            View Enrollment History
+
+                        </a>
+
+                    </div>
 
                 </div>
 

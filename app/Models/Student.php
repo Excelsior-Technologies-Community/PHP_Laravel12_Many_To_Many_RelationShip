@@ -12,14 +12,20 @@ class Student extends Model
     public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class)
-                    ->withPivot('enrolled_at')
-                    ->withTimestamps();
+            ->withPivot('enrolled_at')
+            ->withTimestamps();
     }
 
-    // Enroll in a course
+    /**
+     * Enroll student into course
+     */
     public function enroll(Course $course): void
     {
-        $this->courses()->syncWithoutDetaching($course);
+        $this->courses()->syncWithoutDetaching([
+            $course->id => [
+                'enrolled_at' => now()
+            ]
+        ]);
     }
 
     // Drop a course
@@ -32,5 +38,16 @@ class Student extends Model
     public function isEnrolled(Course $course): bool
     {
         return $this->courses()->where('course_id', $course->id)->exists();
+    }
+
+    public function enrollmentHistory()
+    {
+        return $this->belongsToMany(
+            Course::class
+        )
+            ->withPivot(
+                'enrolled_at'
+            )
+            ->withTimestamps();
     }
 }
